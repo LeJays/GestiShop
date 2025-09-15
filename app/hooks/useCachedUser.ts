@@ -2,13 +2,19 @@
 import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 
+type MinimalUser = {
+  id: string;
+  email: string;
+  name: string;
+};
+
 export default function useCachedUser() {
   const { user, isLoaded } = useUser();
-  const [cachedUser, setCachedUser] = useState<any>(null);
+  const [cachedUser, setCachedUser] = useState<MinimalUser | null>(null);
 
   useEffect(() => {
     if (isLoaded && user) {
-      const minimalUser = {
+      const minimalUser: MinimalUser = {
         id: user.id,
         email: user.primaryEmailAddress?.emailAddress ?? "",
         name: user.fullName ?? "",
@@ -21,7 +27,7 @@ export default function useCachedUser() {
       // Si pas encore chargé, tente de récupérer en cache
       const stored = localStorage.getItem("cachedUser");
       if (stored) {
-        setCachedUser(JSON.parse(stored));
+        setCachedUser(JSON.parse(stored) as MinimalUser);
       }
     }
   }, [user, isLoaded]);
