@@ -5,7 +5,6 @@ import { useUser } from '@clerk/nextjs'
 import React, { useEffect, useState } from 'react'
 import { deductStockWithTransaction, readProducts } from '../actions'
 import Wrapper from '../components/Wrapper'
-import { text } from 'stream/consumers'
 import ProductComponent from '../components/ProductComponent'
 import EmptyState from '../components/EmptyState'
 import ProductImage from '../components/ProductImage'
@@ -13,22 +12,19 @@ import { Trash } from 'lucide-react'
 import { toast } from 'react-toastify'
 
 const Page = () => {
-
     const { user } = useUser()
     const email = user?.primaryEmailAddress?.emailAddress as string
+
     const [products, setProducts] = useState<Product[]>([])
     const [order, setOrder] = useState<OrderItem[]>([])
     const [searchQuery, setSearchQuery] = useState<string>("")
     const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
 
-
     const fetchProducts = async () => {
         try {
             if (email) {
                 const products = await readProducts(email)
-                if (products) {
-                    setProducts(products)
-                }
+                if (products) setProducts(products)
             }
         } catch (error) {
             console.error(error)
@@ -36,8 +32,7 @@ const Page = () => {
     }
 
     useEffect(() => {
-        if (email)
-            fetchProducts()
+        if (email) fetchProducts()
     }, [email])
 
     const filteredAvailableProducts = products
@@ -53,11 +48,9 @@ const Page = () => {
             let updatedOrder
             if (existingProduct) {
                 updatedOrder = prevOrder.map((item) =>
-                    item.productId === product.id ?
-                        {
-                            ...item,
-                            quantity: Math.min(item.quantity + 1, product.quantity)
-                        } : item
+                    item.productId === product.id
+                        ? { ...item, quantity: Math.min(item.quantity + 1, product.quantity) }
+                        : item
                 )
             } else {
                 updatedOrder = [
@@ -70,14 +63,11 @@ const Page = () => {
                         name: product.name,
                         availableQuantity: product.quantity,
                     }
-
                 ]
             }
 
             setSelectedProductIds((prevSelected) =>
-                prevSelected.includes(product.id)
-                    ? prevSelected
-                    : [...prevSelected, product.id]
+                prevSelected.includes(product.id) ? prevSelected : [...prevSelected, product.id]
             )
             return updatedOrder
         })
@@ -101,32 +91,33 @@ const Page = () => {
         })
     }
 
-
     const handleSubmit = async () => {
         try {
-            if (order.length == 0) {
+            if (order.length === 0) {
                 toast.error("Veuillez ajouter des produits à la commande.")
                 return
             }
+
             const response = await deductStockWithTransaction(order, email)
 
-            if (response?.success) {
-                toast.success("Sortie confirmé avec succès !")
+            if (response.success) {
+                toast.success(response.message)
                 setOrder([])
                 setSelectedProductIds([])
-                fetchProducts();
+                fetchProducts()
             } else {
-                toast.error(`${response?.message}`)
+                toast.error(response.message)
             }
         } catch (error) {
             console.error(error)
+            toast.error("Une erreur inattendue est survenue.")
         }
     }
-
 
     return (
         <Wrapper>
             <div className='flex md:flex-row flex-col-reverse'>
+                {/* Liste produits disponibles */}
                 <div className='md:w-1/3'>
                     <input
                         type="text"
@@ -137,9 +128,9 @@ const Page = () => {
                     />
                     <div className='space-y-4'>
                         {filteredAvailableProducts.length > 0 ? (
-                            filteredAvailableProducts.map((product, index) => (
+                            filteredAvailableProducts.map((product) => (
                                 <ProductComponent
-                                    key={index}
+                                    key={product.id}
                                     add={true}
                                     product={product}
                                     handleAddToCart={handleAddToCart}
@@ -153,6 +144,8 @@ const Page = () => {
                         )}
                     </div>
                 </div>
+
+                {/* Panier / commande */}
                 <div className='md:w-2/3 p-4 md:ml-4 mb-4 md:mb-0 h-fit border-2 border-base-200 rounded-3xl overflow-x-auto'>
                     {order.length > 0 ? (
                         <>
@@ -177,22 +170,18 @@ const Page = () => {
                                                     widthClass='w-12'
                                                 />
                                             </td>
-                                            <td>
-                                                {item.name}
-                                            </td>
+                                            <td>{item.name}</td>
                                             <td>
                                                 <input
                                                     type="number"
                                                     value={item.quantity}
-                                                    min="1"
+                                                    min={1}
                                                     max={item.availableQuantity}
                                                     className='input input-bordered w-20'
                                                     onChange={(e) => handleQuantityChange(item.productId, Number(e.target.value))}
                                                 />
                                             </td>
-                                            <td className='capitalize'>
-                                                {item.unit}
-                                            </td>
+                                            <td className='capitalize'>{item.unit}</td>
                                             <td>
                                                 <button
                                                     className='btn btn-sm btn-error'
@@ -207,7 +196,7 @@ const Page = () => {
                             </table>
                             <button
                                 onClick={handleSubmit}
-                                className='btn btn-primary mt-4 w-fit '
+                                className='btn btn-primary mt-4 w-fit'
                             >
                                 Confirmer la sortie
                             </button>
@@ -220,7 +209,7 @@ const Page = () => {
                     )}
                 </div>
             </div>
-        </Wrapper >
+        </Wrapper>
     )
 }
 
