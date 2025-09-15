@@ -1,16 +1,13 @@
 "use client"
-import { useUser } from "@clerk/nextjs";
-import Wrapper from "./components/Wrapper";
-import ProductOverview from "./components/ProductOverview";
-import CategoryChart from "./components/CategoryChart";
-import RecentTransactions from "./components/RecentTransactions";
-import StockSummaryTable from "./components/StockSummaryTable";
-
+import useCachedUser from "./hooks/useCachedUser"
+import Wrapper from "./components/Wrapper"
+import ProductOverview from "./components/ProductOverview"
+import CategoryChart from "./components/CategoryChart"
+import RecentTransactions from "./components/RecentTransactions"
+import StockSummaryTable from "./components/StockSummaryTable"
 
 export default function Home() {
-
-  const { user } = useUser()
-  const email = user?.primaryEmailAddress?.emailAddress as string
+  const email = useCachedUser()
 
 
   return (
@@ -26,5 +23,5 @@ export default function Home() {
         </div>
       </div>
     </Wrapper>
-  );
+  )
 }
