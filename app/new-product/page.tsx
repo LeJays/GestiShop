@@ -1,10 +1,11 @@
 "use client"
+
 import React, { useEffect, useState } from 'react'
 import Wrapper from '../components/Wrapper'
 import { useUser } from '@clerk/nextjs'
 import { Category } from '@prisma/client'
 import { FormDataType } from '@/type'
-import { createProduct, readCategories } from '../actions'
+import { readCategories } from '../actions'
 import ProductImage from '../components/ProductImage'
 import { FileImage } from 'lucide-react'
 import { toast } from 'react-toastify'
@@ -60,17 +61,20 @@ const NewProductPage = () => {
     if (!file) return toast.error("Veuillez sélectionner une image")
 
     try {
-      const imageData = new FormData()
-      imageData.append("file", file)
+      const form = new FormData()
+      form.append("file", file)
+      form.append("formData", JSON.stringify(formData))
+      form.append("email", email)
 
-      const res = await fetch("/api/upload", { method: "POST", body: imageData })
+      const res = await fetch("/api/products", { method: "POST", body: form })
       const data = await res.json()
-      if (!data.success) throw new Error("Erreur lors de l'upload de l'image")
 
-      await createProduct({ ...formData, imageUrl: data.path }, email)
-
-      toast.success("Produit créé avec succès")
-      router.push("/new-product")
+      if (data.success) {
+        toast.success("Produit créé avec succès")
+        router.push("/new-product")
+      } else {
+        toast.error(data.message || "Erreur lors de la création du produit")
+      }
     } catch (err) {
       console.error(err)
       toast.error("Erreur lors de la création du produit")
@@ -89,7 +93,7 @@ const NewProductPage = () => {
           <textarea name="description" placeholder="Description" className="textarea textarea-bordered w-full" value={formData.description} onChange={handleChange} />
           <input type="number" name="price" placeholder="Prix" className="input input-bordered w-full" value={formData.price} onChange={handleChange} />
 
-          <select className="select select-bordered w-full" value={formData.categoryId} name="categoryId" onChange={handleChange}>
+          <select className="select select-bordered w-full" name="categoryId" value={formData.categoryId} onChange={handleChange}>
             <option value="">Sélectionner une catégorie</option>
             {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
           </select>
@@ -113,7 +117,11 @@ const NewProductPage = () => {
           <button onClick={handleSubmit} className="btn btn-primary w-full">Créer le produit</button>
 
           <div className="mt-4 md:w-[300px] md:h-[300px] border-2 border-primary p-5 flex justify-center items-center rounded-3xl">
-            {previewUrl ? <ProductImage src={previewUrl} alt="preview" widthClass="w-40" heightClass="h-40" /> : <FileImage strokeWidth={1} className="h-10 w-10 text-primary" />}
+            {previewUrl ? (
+              <ProductImage src={previewUrl} alt="preview" widthClass="w-40" heightClass="h-40" />
+            ) : (
+              <FileImage strokeWidth={1} className="h-10 w-10 text-primary" />
+            )}
           </div>
         </div>
       </div>
